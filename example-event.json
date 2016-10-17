@@ -1,0 +1,4 @@
+{
+	"expireSnapshotArgs": "--noaction --keep-first-daily 8 --keeep-first-monthly 2",
+	 "filters": [ { "Name": "tag:Name", "Values": [ "automated-backup" ] } ]
+}
