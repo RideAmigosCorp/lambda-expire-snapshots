@@ -1,42 +1,89 @@
 
-This project uses the [ec2-expire-snapshots](https://github.com/alestic/ec2-expire-snapshots) CLI tool written in Perl to expire EBS snapshots using Lambda.
+Use AWS Lambda to expire EBS snapshot with flexible retention rules.
 
-AWS Lambda does not directly support Perl, So [./index.js](./index.js) is provided as a simple Node.js wrapper to
-call `ec2-expire-snapshots`.
+## Why Use Lambda to expire snapshots?
+
+Some EBS snapshot management tools combine creating and expiring snapshots into a single tool.
+
+Snapshot creation should be done from the host, where you have the flexibility to do things like freeze the filesystem or pause a service during the freeze.
+
+However, deleting snapshots should *not* be done from hosts. When that pattern is used, it means a comprimise of a server can lead to deletion of the backups of the server as well.
+
+AWS Lambda is very inexpensive and runs independently of any host
+
+## Why use this snapshot deletion tool?
+
+  * Flexible retention rules
+  * Test coverage
+  * Multiple retention policies using a single Lambda function.
+
+Our flexible retention rules are implemented by the [grandfatherson](https://github.com/RideAmigosCorp/grandfatherson) module, which has it's own test coverage to confirm the algorithm is working as expected.
+
+The code here is also split into functions that are unit tested, expecting where we actually make the AWS calls.
+
+Deleting the right data and not too much of it is incredibly important feature for a tool that deletes backups. Yet many tools that offer to help you delete your snapshots have no test coverage to confirm that they are working as expected.
 
 ## Usage
 
-Modify `./index.js` to supply the arguments you want to pass to [ec2-expire-snapshots](https://github.com/alestic/ec2-expire-snapshots).
-
+Use this command to create a .zip file to upload to AWS Lambda.
 
    npm run package-for-deploy
 
-Upload and activate on AWS Lambda as usual.
+To create a trigger, visit AWS Cloudwatch and create a new event rule.
 
-Doing your first run with the `--noaction` flag is highly recommend. 
+Select the "cron" option and express the schedule you want to run your snapshots on. For example, every day at 3 AM UTC would look like this:
 
-## How can this work?
 
-AWS [supports running arbitrary executables in Lambda](https://aws.amazon.com/blogs/compute/running-executables-in-aws-lambda/).
-As the linked post mentions is also clear that your code is running in a virtual machine running an instance of Amazon Linux.
-Looking at the [package list for Amazon Linux](https://aws.amazon.com/amazon-linux-ami/2016.09-packages/) you can see that it
-not only contains the Perl binary, but also all the dependencies of `ec2-expire-snapshots`
+    0 3 * * ? *
 
-## Why not use a native Node.js or Python solution?
+Choose to customize the event to send "Constant JSON". This is where your express
+your configuration. An example is in [./example-event.json](./example-event.json)
+which looks like this:
 
-`ec2-expire-snapshots` is tried-and-true, tested by many people over several years-- an important quality when it comes to deleting
-your backups selectively!
+```json
+    {
+      "dryRun" : true,
+      "retentionRules" : {
+         "days"   : 14,
+         "weeks"  : 13,
+         "months" : 12
+      },
+      "filters": [ { "Name" : "tag:Name", "Values" : ["automated-backup" ] } ]
+    }
+```
 
-A native Node.js or Python solution would be nice for the long term, but this was faster to set up today.
+As would you guess, `dryRun` produces logging output, but takes no action. Highly recommended to try this first. For all the options for `retentionRules`,
+see [grandfatherson](https://github.com/RideAmigosCorp/grandfatherson).
 
-## Related Projects
+The `filters` are used to select which snapshots you want to prune. For the full list of options see the [docs for the AWS EC2 deleteSnapshot](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/EC2.html) API call.
 
- * [lambda-function-wrapper](https://github.com/alestic/lambda-function-wrapper) provides a proof-of-concept for running Perl from Node.js
- * [SnapshotExpirationUtility](https://github.com/tangerinedream/SnapshotExpirationUtility) uses Python, but currently supports only a very simple retention rule and does not yet support Lambda 
- * [rotate-snapshot](https://github.com/szkkentaro/rotate-snapshot) is written in Node.js and supports Lambda, but also only supports a very simple retention rule, and isn't actively being updated at the moment.
- * [grandfatherson](https://github.com/ecometrica/grandfatherson) implements the useful Grandfather Father Son retention rule algorithm in Python, but it isn't yet integrated with a Python project that does snapshot deletion.
+In the above example, we are searching for all snapshots where the tag "Name" has the value 'automated-backup'
 
-There are various projects that handle both snapshot creation and deletion in a single tool, but that underdesirable. By creating snapshots seperately on processes run on each host we have the ability to freeze the filesystem to insure consistency.
+### Implementing multiple retention rules
 
+Say you want to apply a different retention policy to some backups, like your database data. There are two simple steps to do that:
+
+  1. Use a different `filters` to find them. For example, give them a different tag that you can search for.
+  2. Use CloudWatch to create a second Event Rule that's attached to the same AWS Lambda function.
+
+## Testing / Dry Run
+
+After doing a dry-run, you can view the related log stream in CloudWatch to confirm that you would be retaining and deleting what you expected. The diagnotics could improved here. Patches welcome.
+
+## Logging
+
+During live runs, we log the IDs of snapshots deleted to CloudWatch. Patches would be welcome to create more detailed logging that might include the related volume-ID or other details of the snapshots deleted. 
+
+## Contributing
+
+Bug fixes and feature contributions are welcome, just be prepared to implement your own feature requests.
+
+## Author
+
+Mark Stosberg <mark@rideamigos.com>
+
+## LICENSE
+
+Apache 2. See [LICENSE](./LICENSE)
 
 

@@ -1,4 +1,10 @@
 {
-	"expireSnapshotArgs": "--noaction --keep-first-daily 8 --keeep-first-monthly 2",
-	 "filters": [ { "Name": "tag:Name", "Values": [ "automated-backup" ] } ]
+  "dryRun" : true,
+  "retentionRules" : {
+     "days"   : 14,
+     "weeks"  : 13,
+     "months" : 12
+  },
+  "filters": [ { "Name" : "tag:Name", "Values" : ["automated-backup" ] } ]
 }
+
