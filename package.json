@@ -1,6 +1,6 @@
 {
   "name": "lambda-expire-snapshots",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Expire EBS snapshots from AWS Lambda using Grandfather Father Son retention rules",
   "main": "index.js",
   "devDependencies": {
@@ -9,14 +9,14 @@
     "mocha": "^3.1.2"
   },
   "dependencies": {
-    "async": "^2.1.2",
-    "grandfatherson": "^1.1.1",
+    "async": "^2.1.4",
     "aws-sdk": "^2.6.10",
-    "lodash": "^4.16.4"
+    "grandfatherson": "^1.1.1",
+    "lodash": "^4.17.2"
   },
   "scripts": {
     "test": "mocha --reporter=spec test/*.js",
-    "package-for-deploy": "rm -rf node_modules/ && yarn add lodash grandfatherson async && zip -v -r -9 lambda-expire-snapshots.zip  *"
+    "package-for-deploy": "node -c index.js && rm -rf node_modules/ && yarn add lodash grandfatherson async && zip -v -r -9 lambda-expire-snapshots.zip  *"
   },
   "repository": {
     "type": "git",

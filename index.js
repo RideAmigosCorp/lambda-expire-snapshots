@@ -5,12 +5,19 @@ var assert = require('assert');
 var aws    = require("aws-sdk");
 var gfs    = require('grandfatherson');
 var _      = require("lodash");
-var ec2    = new aws.EC2({apiVersion: "2016-09-15" });
+
+
+var ec2;
 
 
 class ExpireSnapshots {
   // Main logic for the Lamda event handler
   static handler (event, context, handlerCallback) {
+
+    // If you don't provide a regions array, default to the region Lambda is running in.
+    if (!event.regions) {
+      event.regions = [process.env.AWS_REGION];
+    }
 
     // Using CloudWatch, The config is passed as an event using the "Constant (JSON text)" option
     const config = event;
@@ -27,38 +34,46 @@ class ExpireSnapshots {
       return handlerCallback("config.retentionRules is required.");
     }
 
-    // Use filters to find a list of volume Ids to pass to ec2-expire-snapshots
-    // We always want DryRun:false here, because describing the snapshots is a safe, read-only operation
-    ec2.describeSnapshots({ DryRun: false, Filters: config.filters }, function(err, data) {
-      if (err) {
-        return handlerCallback(err, err.stack);
-      }
+    // Run the snapshots in all configured regions
+    config.regions.map(function (region) {
+      console.log("START snapshot expiration for region: "+region);
 
-      var byVolume = ExpireSnapshots.organizeSnapshotsByVolume(data.Snapshots);
+      ec2 = new aws.EC2({apiVersion: "2016-09-15", "region": region});
 
-      var filteredSnaps = [];
+      // Use filters to find a list of volume Ids to pass to ec2-expire-snapshots
+      // We always want DryRun:false here, because describing the snapshots is a safe, read-only operation
+      ec2.describeSnapshots({ DryRun: false, Filters: config.filters }, function(err, data) {
+        if (err) {
+          return handlerCallback(err, err.stack);
+        }
 
-      // For each volume ID, delete volumes according to retention rules.
-      // If dryRun was provided, don't delete just return what we would do.
-      // When we are done, callback to note we are done with the Lambda function
-      async.mapSeries(Object.keys(byVolume), function (volId, volumeCallback) {
-        var filteredSnaps = ExpireSnapshots.selectSnapsToDelete( byVolume[volId], config.retentionRules );
+        var byVolume = ExpireSnapshots.organizeSnapshotsByVolume(data.Snapshots);
 
-        // Not Debugging! Leave this in.
-        console.info("For %s keeps snaps with these relative ages %j",volId,filteredSnaps.toKeep.reverse());
+        var filteredSnaps = [];
 
-        // Delete all snapshots, possibly  with the dry run flag,
-        // then callback to note we are done with the current volume
-        var snapsToDeleteParams  = ExpireSnapshots.delParams(filteredSnaps.toDelete, config.dryRun);
-        async.mapSeries(snapsToDeleteParams, ExpireSnapshots.delOneSnap, volumeCallback);
-      }, function (err, results) {
-        console.log("ERROR");
-        console.dir(err)
-        console.log("RESULTS");
-        console.dir(results)
-        handlerCallback();
+        // For each volume ID, delete volumes according to retention rules.
+        // If dryRun was provided, don't delete just return what we would do.
+        // When we are done, callback to note we are done with the Lambda function
+        async.mapSeries(Object.keys(byVolume), function (volId, volumeCallback) {
+          var filteredSnaps = ExpireSnapshots.selectSnapsToDelete( byVolume[volId], config.retentionRules );
+
+          // Not Debugging! Leave this in.
+          console.info("For %s keeps snaps with these relative ages %j",volId,filteredSnaps.toKeep.reverse());
+
+          // Delete all snapshots, possibly  with the dry run flag,
+          // then callback to note we are done with the current volume
+          var snapsToDeleteParams  = ExpireSnapshots.delParams(filteredSnaps.toDelete, config.dryRun);
+          async.mapSeries(snapsToDeleteParams, ExpireSnapshots.delOneSnap, volumeCallback);
+        }, function (err, results) {
+          console.log("ERROR");
+          console.dir(err)
+          console.log("RESULTS");
+          console.dir(results)
+          console.log("END snapshot expiration for region: "+region);
+          handlerCallback();
+        });
       });
-    });
+    })
   }
 
   /*

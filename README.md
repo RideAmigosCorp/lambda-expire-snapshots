@@ -16,6 +16,7 @@ AWS Lambda is very inexpensive and runs independently of any host
   * Flexible retention rules
   * Test coverage
   * Multiple retention policies using a single Lambda function.
+  * Multiple region support
 
 Our flexible retention rules are implemented by the [grandfatherson](https://github.com/RideAmigosCorp/grandfatherson) module, which has it's own test coverage to confirm the algorithm is working as expected.
 
@@ -48,7 +49,8 @@ which looks like this:
          "weeks"  : 13,
          "months" : 12
       },
-      "filters": [ { "Name" : "tag:Name", "Values" : ["automated-backup" ] } ]
+      "filters": [ { "Name" : "tag:Name", "Values" : ["automated-backup" ] } ],
+      regions : ['us-east-1','ca-central-1'],
     }
 ```
 
@@ -56,6 +58,8 @@ As would you guess, `dryRun` produces logging output, but takes no action. Highl
 see [grandfatherson](https://github.com/RideAmigosCorp/grandfatherson).
 
 The `filters` are used to select which snapshots you want to prune. For the full list of options see the [docs for the AWS EC2 deleteSnapshot](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/EC2.html) API call.
+
+`regions` is used to set the regions you want expire your snapshots in. (One Lambda function can expire snapshots in other regions besides where the Lambda is hosted). The default value is the region where the Lambda is running.
 
 In the above example, we are searching for all snapshots where the tag "Name" has the value 'automated-backup'
 
@@ -72,7 +76,7 @@ After doing a dry-run, you can view the related log stream in CloudWatch to conf
 
 ## Logging
 
-During live runs, we log the IDs of snapshots deleted to CloudWatch. Patches would be welcome to create more detailed logging that might include the related volume-ID or other details of the snapshots deleted. 
+During live runs, we log the IDs of snapshots deleted to CloudWatch. Patches would be welcome to create more detailed logging that might include the related volume-ID or other details of the snapshots deleted.
 
 ## Contributing
 
