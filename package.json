@@ -1,6 +1,6 @@
 {
   "name": "lambda-expire-snapshots",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Expire EBS snapshots from AWS Lambda using Grandfather Father Son retention rules",
   "main": "index.js",
   "devDependencies": {
