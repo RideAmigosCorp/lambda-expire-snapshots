@@ -65,8 +65,13 @@ class ExpireSnapshots {
           var snapsToDeleteParams  = ExpireSnapshots.delParams(filteredSnaps.toDelete, config.dryRun);
           async.mapSeries(snapsToDeleteParams, ExpireSnapshots.delOneSnap, volumeCallback);
         }, function (err, results) {
-          console.log("ERROR");
-          console.dir(err)
+          if (err) {
+            console.log("ERROR");
+            console.dir(err)
+          } else {
+            console.log("SUCCESS");
+          }
+
           console.log("RESULTS");
           console.dir(results)
           console.log("END snapshot expiration for region: "+region);
