@@ -1,6 +1,13 @@
 
 # Change Log
 
+## [1.2.0] - 2017-10-08
+
+### Bug Fixes
+
+ * Fix bug with multi-region support that could cause
+   "InvalidSnapshot.NotFound: The snapshot 'snap-...' does not exist." (@pserwylo)
+
 ## [1.1.2] - 2017-07-18
 
 ### Packaging
