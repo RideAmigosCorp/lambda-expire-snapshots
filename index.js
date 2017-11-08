@@ -7,9 +7,6 @@ var gfs    = require('grandfatherson');
 var _      = require("lodash");
 
 
-var ec2;
-
-
 class ExpireSnapshots {
   // Main logic for the Lamda event handler
   static handler (event, context, handlerCallback) {
@@ -38,7 +35,7 @@ class ExpireSnapshots {
     config.regions.map(function (region) {
       console.log("START snapshot expiration for region: "+region);
 
-      ec2 = new aws.EC2({apiVersion: "2016-09-15", "region": region});
+      var ec2 = new aws.EC2({apiVersion: "2016-09-15", "region": region});
 
       // Use filters to find a list of volume Ids to pass to ec2-expire-snapshots
       // We always want DryRun:false here, because describing the snapshots is a safe, read-only operation
@@ -63,7 +60,7 @@ class ExpireSnapshots {
           // Delete all snapshots, possibly  with the dry run flag,
           // then callback to note we are done with the current volume
           var snapsToDeleteParams  = ExpireSnapshots.delParams(filteredSnaps.toDelete, config.dryRun);
-          async.mapSeries(snapsToDeleteParams, ExpireSnapshots.delOneSnap, volumeCallback);
+          async.mapSeries(snapsToDeleteParams, ExpireSnapshots.delOneSnap(ec2), volumeCallback);
         }, function (err, results) {
           if (err) {
             console.log("ERROR");
@@ -148,25 +145,27 @@ class ExpireSnapshots {
             .value();
   }
 
-  // async map iterator
-  static delOneSnap (params, callback) {
-    const PAUSE_MILLISECONDS = 100; // Avoid AWS throttling.
-    setTimeout(function () {
-       ec2.deleteSnapshot(params, function(err, data) {
-         if (err) {
-           if (err.hasOwnProperty("code") && err.code == "DryRunOperation") {
-             //data = err;
-             data = 'DRY RUN: Would delete snapshot-id '+params.SnapshotId;
-             err = null;
+  // Returns async map iterator, which doesn't depend on the global ec2 object.
+  static delOneSnap(ec2) {
+    return function(params, callback) {
+      const PAUSE_MILLISECONDS = 100; // Avoid AWS throttling.
+      setTimeout(function () {
+         ec2.deleteSnapshot(params, function(err, data) {
+           if (err) {
+             if (err.hasOwnProperty("code") && err.code == "DryRunOperation") {
+               //data = err;
+               data = 'DRY RUN: Would delete snapshot-id '+params.SnapshotId;
+               err = null;
+             }
+             callback(err, data);
            }
-           callback(err, data);
-         }
-         // Deleting was successful and it was not a dry run. Log and callback
-         else {
-           callback(null, data);
-         }
-     });
-    }, PAUSE_MILLISECONDS);
+           // Deleting was successful and it was not a dry run. Log and callback
+           else {
+             callback(null, data);
+           }
+       });
+      }, PAUSE_MILLISECONDS);
+    }
   }
 }
 
