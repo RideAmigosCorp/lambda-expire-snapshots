@@ -30,7 +30,11 @@ Use this command to create a .zip file to upload to AWS Lambda.
 
    npm run package-for-deploy
 
-To create a trigger, visit AWS Cloudwatch and create a new event rule.
+Create a new Lambda function in the AWS management console or via CLI and choose "Upload a .zip file" for the code entry type. 
+
+Make sure an IAM role with the apporopriate snapshot policy is available for the execution role. 
+
+To create a trigger, visit AWS Cloudwatch and create a new event rule
 
 Select the "cron" option and express the schedule you want to run your snapshots on. For example, every day at 3 AM UTC would look like this:
 
@@ -57,7 +61,7 @@ which looks like this:
 As would you guess, `dryRun` produces logging output, but takes no action. Highly recommended to try this first. For all the options for `retentionRules`,
 see [grandfatherson](https://github.com/RideAmigosCorp/grandfatherson).
 
-The `filters` are used to select which snapshots you want to prune. For the full list of options see the [docs for the AWS EC2 deleteSnapshot](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/EC2.html) API call.
+The `filters` are used to select which snapshots you want to prune. For the full list of options see the [docs for the AWS EC2 DescribeVolumes](https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeVolumes.html) API call.
 
 `regions` is used to set the regions you want expire your snapshots in. One Lambda function can expire snapshots in other regions besides where the Lambda is hosted. The default value is the region where the Lambda is running.
 
