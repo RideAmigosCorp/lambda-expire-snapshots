@@ -30,9 +30,9 @@ Use this command to create a .zip file to upload to AWS Lambda.
 
    npm run package-for-deploy
 
-Create a new Lambda function in the AWS management console or via CLI and choose "Upload a .zip file" for the code entry type. 
+Create a new Lambda function in the AWS management console or via CLI and choose "Upload a .zip file" for the code entry type.
 
-Make sure an IAM role with the apporopriate snapshot policy is available for the execution role. 
+Make sure an IAM role with the apporopriate snapshot policy is available for the execution role.
 
 To create a trigger, visit AWS Cloudwatch and create a new event rule
 

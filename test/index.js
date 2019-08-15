@@ -5,11 +5,10 @@ var chai = require('chai');
 var moment = require('moment');
 var expect = chai.expect;
 
-describe('organizeSnapshotsByVolume', function() {
-  var organizeSnapshotsByVolume = index.organizeSnapshotsByVolume;
+describe('organizeSnapshotsByVolume', function() { var organizeSnapshotsByVolume = index.organizeSnapshotsByVolume;
 
   it("single snapshot should be transformed as expected", function () {
-	  // This is taken straight from the AWS docs
+    // This is taken straight from the AWS docs
     var snapshots = [
         {
             "Description": "This is my snapshot.",
@@ -23,16 +22,16 @@ describe('organizeSnapshotsByVolume', function() {
         }
     ];
 
-		var byVolume = organizeSnapshotsByVolume(snapshots);
-		expect(byVolume).to.eql({
-				"vol-049df61146c4d7901" : [
-						{ SnapshotId: "snap-1234567890abcdef0", StartTime: "2014-02-28T21:28:32.000Z" }
-				]
-		});
-	});
+    var byVolume = organizeSnapshotsByVolume(snapshots);
+    expect(byVolume).to.eql({
+        "vol-049df61146c4d7901" : [
+            { SnapshotId: "snap-1234567890abcdef0", StartTime: "2014-02-28T21:28:32.000Z" }
+        ]
+    });
+  });
 
   it("two snapshots for different volumes should be transformed as expected", function () {
-	  // This is taken straight from the AWS docs
+    // This is taken straight from the AWS docs
     var snapshots = [
         {
             "Description": "This is my snapshot.",
@@ -56,11 +55,11 @@ describe('organizeSnapshotsByVolume', function() {
         }
     ];
 
-		var byVolume = organizeSnapshotsByVolume(snapshots);
-		expect(byVolume).to.eql({
-				"vol-049df61146c4d7901" : [ { SnapshotId: "snap-1234567890abcdef0", StartTime: "2014-02-28T21:28:32.000Z" } ],
-				"vol-049df61146c4d7902" : [ { SnapshotId: "snap-1234567890abcdef1", StartTime: "2014-02-28T21:28:32.001Z" } ]
-		});
+    var byVolume = organizeSnapshotsByVolume(snapshots);
+    expect(byVolume).to.eql({
+        "vol-049df61146c4d7901" : [ { SnapshotId: "snap-1234567890abcdef0", StartTime: "2014-02-28T21:28:32.000Z" } ],
+        "vol-049df61146c4d7902" : [ { SnapshotId: "snap-1234567890abcdef1", StartTime: "2014-02-28T21:28:32.001Z" } ]
+    });
 
   });
 });
@@ -73,7 +72,7 @@ describe('selectSnapsToDelete', function() {
         { SnapshotId: "snap-1234567890abcdef0", StartTime: new Date("1999-12-31T21:28:32.000Z") },
         { SnapshotId: "snap-1234567890abcdef1", StartTime: new Date("1999-12-30T21:28:32.000Z") },
         { SnapshotId: "snap-1234567890abcdef2", StartTime: new Date("1999-12-29T21:28:32.000Z") },
-    ]; 
+    ];
 
     var retentionRules = {
       now  : moment.utc('1999-12-31'),
@@ -153,7 +152,7 @@ describe('selectSnapsToDelete', function() {
 
     var toDelete = selectSnapsToDelete(snapshots, retentionRules).toDelete;
 
-  	// Just reality check the the number of snapshots we start with.
+    // Just reality check the the number of snapshots we start with.
     expect(snapshots).to.have.lengthOf(52);
 
    expect(toDelete).to.have.lengthOf(31);
@@ -167,7 +166,7 @@ describe('delParams', function() {
     var snapshots = [
         { SnapshotId: "snap-1", StartTime: "1999-12-31T21:28:32.000Z" },
         { SnapshotId: "snap-2", StartTime: "1999-12-30T21:28:32.000Z" },
-    ]; 
+    ];
 
     var dryRun = true;
 

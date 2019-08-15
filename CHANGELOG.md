@@ -3,7 +3,7 @@
 
 ## [1.2.1] - 2019-08-15
 
-### Internals
+### Internals 
 
  * Improve README, mention AWS Backup
 
