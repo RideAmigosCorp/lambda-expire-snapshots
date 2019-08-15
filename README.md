@@ -82,6 +82,17 @@ After doing a dry-run, you can view the related log stream in CloudWatch to conf
 
 During live runs, we log the IDs of snapshots deleted to CloudWatch. Patches would be welcome to create more detailed logging that might include the related volume-ID or other details of the snapshots deleted.
 
+## Alternatives
+
+After this was developed, [AWS Backup](https://aws.amazon.com/backup/) was
+released and provides similar functionality. AWS Backup assigns lifecycle rules
+to snapshots as they are created. The "AWS Backup" approach does not require a
+rotation Lamba like this. The downside to the AWS Backup approach is that if
+you change your expiration rules, it won't retro-actively apply them to backups
+that have already been created. That can be a bummer if you accidentally create too many backups.
+
+Using this tool, when you update the retention rules existing snapshots will be affected.
+
 ## Contributing
 
 Bug fixes and feature contributions are welcome, just be prepared to implement your own feature requests.

@@ -82,7 +82,7 @@ describe('selectSnapsToDelete', function() {
 
     var toDelete = selectSnapsToDelete(snapshots, retentionRules).toDelete;
 
-    expect(toDelete).length.to.be(1);
+    expect(toDelete).have.lengthOf(1);
     expect(toDelete).to.eql([
         { SnapshotId: "snap-1234567890abcdef2", StartTime: new Date("1999-12-29T21:28:32.000Z") },
     ])
@@ -154,9 +154,9 @@ describe('selectSnapsToDelete', function() {
     var toDelete = selectSnapsToDelete(snapshots, retentionRules).toDelete;
 
   	// Just reality check the the number of snapshots we start with.
-    expect(snapshots).length.to.be(52);
+    expect(snapshots).to.have.lengthOf(52);
 
-   expect(toDelete).length.to.be(31);
+   expect(toDelete).to.have.lengthOf(31);
  });
 });
 

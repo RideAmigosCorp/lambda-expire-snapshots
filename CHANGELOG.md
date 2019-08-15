@@ -1,6 +1,16 @@
 
 # Change Log
 
+## [1.2.1] - 2019-08-15
+
+### Internals
+
+ * Improve README, mention AWS Backup
+
+### Packaging
+
+ * Update dependencies
+
 ## [1.2.0] - 2017-10-08
 
 ### Bug Fixes
